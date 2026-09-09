@@ -1,0 +1,121 @@
+// C++ code
+#include <IRremote.hpp> 
+//----------- VARIÁVEIS DO MOTOR---------------------
+
+const int IN1 = 11; // Controle de polaridade MOTOR 1
+const int IN2 = 12; // Controle de polaridade MOTOR 1
+
+//----------- Variáveis Ultrasom --------------------
+const float soundSpeed = 0.0343;
+const int Ultra1 = 7;
+
+const int Echo1 = 6;
+
+//--------------- OUTROS ---------------------
+const int IRC = 5;
+const int SenBorda = 13;
+int IR_At = 0; // "Autorização" para iniciar
+int Borda = 0; // CONTROLE DE AÇÃO
+
+
+void setup()
+{
+  Serial.begin(9600);
+  // SENSOR ULTRASOM
+  pinMode(Ultra1, OUTPUT);
+  
+  pinMode(Echo1, INPUT);
+  
+  // MOTOR
+ 
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+
+
+  // OUTROS
+  randomSeed(analogRead(A0));
+  IrReceiver.begin(IRC, ENABLE_LED_FEEDBACK);
+  pinMode(SenBorda, INPUT);
+}
+
+void loop()
+{
+  // Ações primárias de controle
+  if(IrReceiver.decode()){
+    IR_At = 1;
+  }
+
+  if((digitalRead(SenBorda) == LOW)){
+    Borda = 1;
+  }
+  // Lógica principal
+  
+   
+     
+   if(IR_At == 1 && Borda == 0){
+    if(DistanciaSonar(Ultra1, Echo1) < 100){
+      Foward(10000);
+   }
+    else{ 
+      TurnLeft(30000);
+    }
+   }
+   else{
+     Backward(1000);
+     Borda = 0;
+   }
+  
+  
+  imprimirSerial(DistanciaSonar(Ultra1, Echo1));
+  
+  
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(250); 
+}
+float DistanciaSonar(int ultra, int echo){
+  digitalWrite(ultra, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(ultra, LOW);
+ 
+  
+  float duracao = pulseIn(echo, HIGH);
+  
+  return (duracao * soundSpeed) / 2;
+}
+void imprimirSerial(float dist1){
+  Serial.print("Distancia1:");
+  Serial.print(dist1);
+  
+  Serial.print("             \n");
+
+}
+void Foward(int temp){
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, HIGH);
+  delayMicroseconds(temp);
+  parar();
+  
+}
+void Backward(int temp){
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  delayMicroseconds(temp);
+  parar();
+  
+}
+void TurnLeft(int temp){ 
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  delayMicroseconds(temp);
+  parar();
+}
+void TurnRight(int temp){
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  delayMicroseconds(temp);
+  parar();
+}
+void parar(){
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+}
